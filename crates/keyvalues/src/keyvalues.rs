@@ -10,7 +10,7 @@ use crate::error::Error;
 use crate::parser::{parse, parse_file, Token};
 use crate::builder::build_keyvalues;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct KeyValues {
     map: HashMap<String, String>,
     subkeys: HashMap<String, KeyValues>,
@@ -69,7 +69,7 @@ impl KeyValues {
         }
     }
 
-    pub fn get_subkey(&self, key: &String) -> Option<&KeyValues> {
+    pub fn get_subkey(&self, key: &str) -> Option<&KeyValues> {
         if let Some(kv) = self.subkeys.get(key) {
             Some(kv)
         } else {
@@ -77,12 +77,12 @@ impl KeyValues {
         }
     }
 
-    pub fn add_value(&mut self, key: &String, value: &String) {
-        self.map.insert(key.clone(), value.clone());
+    pub fn add_value(&mut self, key: &str, value: &str) {
+        self.map.insert(key.to_string(), value.to_string());
     }
 
-    pub fn add_subkey(&mut self, key: &String, subkey: &Self) {
-        self.subkeys.insert(key.clone(), subkey.clone());
+    pub fn add_subkey(&mut self, key: &str, subkey: &KeyValues) {
+        self.subkeys.insert(key.to_string(), subkey.clone());
     }
 
 
