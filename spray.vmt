@@ -1,3 +1,7 @@
+dingle berry
+
+"key" VALUE!
+
 LightmappedGeneric
 {
 	"$basetexture"	"vgui\logos\spray_headshot"
@@ -5,4 +9,15 @@ LightmappedGeneric
 	"$decal" "1"
 	"$decalscale" "0.250"
 
+}
+
+VertexLitGeneric {
+	eat "my shorts"
+	suck "a ween"
+
+	"The FitnessGram Pacer Test"
+	{
+		multistage aerobic
+		capacity test
+	}
 }

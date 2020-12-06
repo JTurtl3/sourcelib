@@ -17,20 +17,22 @@ pub fn parse_file(path: &str) -> Result<Vec<Token>, Box<dyn std::error::Error>> 
     Ok(v)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
-    kind: TokenType,
-    line: usize,
+    pub kind: TokenType,
+    pub line: usize,
+    //todo: pub character: char, the token's char index on the line
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     LeftBrace, RightBrace,
-    Quote,
     Str(String),
+
+    EOF,
 }
 
-// Private struct to parse a str
+
 #[derive(Default)]
 struct Parser<'a> {
     source: &'a str,
@@ -51,6 +53,8 @@ impl<'a> Parser<'a> {
             self.start = self.current;
             self.scan_token()?;
         }
+        
+        self.tokens.push(Token { line: 0, kind: TokenType::EOF });
 
         Ok(self.tokens)
     }

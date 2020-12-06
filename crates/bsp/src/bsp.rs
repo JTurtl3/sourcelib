@@ -10,7 +10,7 @@ use std::{
     fs::File,
     io::Read,
     string::FromUtf8Error,
-    collections::HashMap,
+    //collections::HashMap,
 };
 
 #[derive(Debug)]
@@ -43,12 +43,12 @@ impl Bsp {
     }
     
     // Convert the data in the Entity lump into a HashMap
-    pub fn entity_lump(&self) -> Result<Vec<HashMap<String, String>>, FromUtf8Error> {
-        let mut map: Vec<HashMap<String, String>> = Vec::new();
-        let string = self.entity_lump_as_string()?;
+    // pub fn entity_lump(&self) -> Result<Vec<HashMap<String, String>>, FromUtf8Error> {
+    //     let mut map: Vec<HashMap<String, String>> = Vec::new();
+    //     let string = self.entity_lump_as_string()?;
 
-        Ok(map)
-    }
+    //     Ok(map)
+    // }
     
     // Convert the data in the Entity lump to a new String
     // Returns an empty string if the lump doesn't exist
