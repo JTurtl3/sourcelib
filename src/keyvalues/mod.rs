@@ -1,34 +1,30 @@
 // https://developer.valvesoftware.com/wiki/KeyValues
-
-use std::{
-    collections::HashMap,
-    str::FromStr,
-};
+// Basically a recursive HashMap<String, String>.
+// Comes with a way to parse from files and strings
+// in the Source Engine KeyValues format.
+// (Example: .vmt files are Key-Value files)
+// All values are stored as a String in memory,
+// but can be read as different types with get<T: FromStr>(key: String) -> T
 
 pub mod error;
 pub mod parser;
 pub mod builder;
 
 pub use error::*;
-
 pub use parser::*;
 pub use builder::*;
+
+
+use std::{
+    collections::HashMap,
+    str::FromStr,
+};
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct KeyValues {
     map: HashMap<String, String>,
     subkeys: HashMap<String, KeyValues>,
-
-    //maybe todo: some sort of cache
-    // All values are stored as Strings internally.
-    // With get<T>(), it is parsed to T.
-    // This happens every time the function is called.
-    // When a value is successfully parsed, it could be stored somehow
-    // And accessed from there.
-    // This may require getting rid of generic get<T>
-    // and replacing it with get_int, get_string, etc.
-    // So maybe no, let the caller of get<T>() be the one to cache it?
-    // And it's <current year>, computers can handle string parsing.
 }
 
 impl KeyValues {
@@ -66,19 +62,11 @@ impl KeyValues {
     // Like get(), but returns the type's default value if it fails
     // (similar to GetInt, GetFloat, etc from the original KeyValues class)
     pub fn get_or_default<T: FromStr+Default>(&self, key: &String) -> T {
-        if let Some(t) = self.get(key) {
-            t
-        } else {
-            T::default()
-        }
+        self.get(key).unwrap_or(T::default())
     }
 
     pub fn get_subkey(&self, key: &str) -> Option<&KeyValues> {
-        if let Some(kv) = self.subkeys.get(key) {
-            Some(kv)
-        } else {
-            None
-        }
+        self.subkeys.get(key)
     }
 
     pub fn add_value(&mut self, key: &str, value: &str) {
