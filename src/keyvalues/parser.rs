@@ -1,9 +1,9 @@
+use super::error::{Error, ErrorKind};
+
 use std::{
     fs::File,
     io::Read,
 };
-
-use crate::keyvalues::*;
 
 pub fn parse(string: &str) -> Result<Vec<Token>, Error> {
     Parser::from(string).parse()

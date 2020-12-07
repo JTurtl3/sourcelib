@@ -1,5 +1,7 @@
-use crate::keyvalues::{
-    Error, ErrorKind, KeyValues, Token, TokenType
+use super::{
+    error::*,
+    parser::*,
+    keyvalues::*,
 };
 
 // Construct KeyValues from a vec of tokens

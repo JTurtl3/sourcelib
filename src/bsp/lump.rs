@@ -1,4 +1,4 @@
-use crate::bsp::Error;
+use super::error::Error;
 
 #[derive(Default, Clone, Copy, Debug)]
 pub struct Lump {

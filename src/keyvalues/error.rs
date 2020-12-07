@@ -1,4 +1,4 @@
-use crate::keyvalues::TokenType;
+use super::parser::TokenType;
 
 #[derive(Debug)]
 pub struct Error {
