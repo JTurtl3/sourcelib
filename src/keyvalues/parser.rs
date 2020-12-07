@@ -3,7 +3,7 @@ use std::{
     io::Read,
 };
 
-use crate::error::{Error, ErrorKind};
+use crate::keyvalues::*;
 
 pub fn parse(string: &str) -> Result<Vec<Token>, Error> {
     Parser::from(string).parse()

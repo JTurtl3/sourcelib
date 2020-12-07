@@ -1,4 +1,4 @@
-use keyvalues::KeyValues;
+use sourcelib::keyvalues::KeyValues;
 
 #[test]
 fn parse_keyvalues() {

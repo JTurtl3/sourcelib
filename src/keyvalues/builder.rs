@@ -1,6 +1,6 @@
-use crate::parser::{Token, TokenType};
-use crate::error::{Error, ErrorKind};
-use crate::keyvalues::KeyValues;
+use crate::keyvalues::{
+    Error, ErrorKind, KeyValues, Token, TokenType
+};
 
 // Construct KeyValues from a vec of tokens
 pub fn build_keyvalues(tokens: &Vec<Token>) -> Result<KeyValues, Error> {

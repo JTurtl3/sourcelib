@@ -1,5 +1,4 @@
-use crate::lump::{Lump, LUMPS};
-use crate::bsp::Error;
+use crate::bsp::*;
 
 use std::mem::size_of;
 

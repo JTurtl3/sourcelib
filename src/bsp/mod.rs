@@ -1,17 +1,15 @@
-use crate::{
-    header::Header,
-    lump::{
-        LUMPS,
-        LumpIndex,
-    }
-};
-
 use std::{
     fs::File,
     io::Read,
     string::FromUtf8Error,
     //collections::HashMap,
 };
+
+pub mod lump;
+pub mod header;
+
+pub use lump::*;
+pub use header::*;
 
 #[derive(Debug)]
 pub struct Bsp {
@@ -96,7 +94,7 @@ impl std::fmt::Display for Error {
             Self::UnexpectedEof => "Unexpected EOF".to_string(),
             Self::InvalidIdentifier(id) => format!(
                     "Invalid Identifier '0x{:08x}' (expected 0x{:08x})",
-                    id, crate::header::VBSP_HEADER
+                    id, VBSP_HEADER
                 ),
             Self::UnsupportedVersion(vs) => format!(
                     "Unsupported BSP version '{}'", vs

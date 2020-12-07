@@ -5,10 +5,14 @@ use std::{
     str::FromStr,
 };
 
-use crate::error::Error;
+pub mod error;
+pub mod parser;
+pub mod builder;
 
-use crate::parser::{parse, parse_file, Token};
-use crate::builder::build_keyvalues;
+pub use error::*;
+
+pub use parser::*;
+pub use builder::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct KeyValues {
