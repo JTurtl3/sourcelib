@@ -54,7 +54,7 @@ impl<'a> Parser<'a> {
             self.scan_token()?;
         }
         
-        self.tokens.push(Token { line: 0, kind: TokenType::EOF });
+        self.tokens.push(Token { line: self.tokens[self.tokens.len()-1].line, kind: TokenType::EOF });
 
         Ok(self.tokens)
     }

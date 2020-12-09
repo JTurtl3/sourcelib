@@ -53,7 +53,7 @@ impl<'a> Builder<'a> {
                         },
                         TokenType::RightBrace => return Err(unexpected_token_err(t.clone())),
 
-                        TokenType::EOF => return Err(unexpected_eof()),
+                        TokenType::EOF => return Err(unexpected_eof(t)),
                     }
                 },
 
@@ -106,9 +106,9 @@ fn unclosed_brace_err(t: Token) -> Error {
     }
 }
 
-fn unexpected_eof() -> Error {
+fn unexpected_eof(t: Token) -> Error {
     Error {
         kind: ErrorKind::UnexpectedEOF,
-        line: 0,
+        line: t.line,
     }
 }
