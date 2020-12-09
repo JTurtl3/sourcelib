@@ -1,6 +1,6 @@
 use super::parser::TokenType;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Error {
     pub kind: ErrorKind,
     pub line: usize,
@@ -25,7 +25,7 @@ impl std::fmt::Display for Error {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ErrorKind {
     UnterminatedString,
     UnexpectedToken(TokenType),

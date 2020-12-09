@@ -38,7 +38,13 @@ impl<'a> Builder<'a> {
                         },
                         TokenType::LeftBrace => {
                             if let Some(index) = self.find_matching_brace() {
-                                self.result.add_subkey(&key, &Builder::from(&self.tokens[self.current..index].to_vec()).build().expect("oh fiddlesticks"));
+                                match &Builder::from(&self.tokens[self.current..index].to_vec()).build() {
+                                    Ok(subkey) => {
+                                        self.result.add_subkey(&key, subkey);
+                                    },
+                                    
+                                    err => return err.clone(),
+                                }
                                 self.current = index+1;
                             } else {
                                 return Err(unclosed_brace_err(t));

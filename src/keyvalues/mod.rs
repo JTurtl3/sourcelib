@@ -7,9 +7,12 @@
 // but can be read as different types with get<T: FromStr>(key: String) -> T
 
 pub mod keyvalues;
-pub use keyvalues::KeyValues;
-
+pub use keyvalues::*;
 
 mod error;
+pub use error::*;
+
 mod parser;
+pub use parser::*;
+
 mod builder;
