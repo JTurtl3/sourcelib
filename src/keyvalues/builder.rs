@@ -20,10 +20,6 @@ impl<'a> Builder<'a> {
         Self { tokens, result: KeyValues::new(), current: 0 }
     }
 
-    // What a mess!
-    // As far as I know, it works fine
-    // but 1. it's a disaster
-    // and 2. if parsing a subkey fails, it will panic.
     fn build(mut self) -> Result<KeyValues, Error> {
         while !self.is_at_end() {
             let t = self.advance();
@@ -37,19 +33,7 @@ impl<'a> Builder<'a> {
                             self.result.add_value(&key, &value);
                         },
                         TokenType::LeftBrace => {
-                            if let Some(index) = self.find_matching_brace() {
-                                match &Builder::from(&self.tokens[self.current..index].to_vec()).build() {
-                                    Ok(subkey) => {
-                                        self.result.add_subkey(&key, subkey);
-                                    },
-                                    
-                                    err => return err.clone(),
-                                }
-                                self.current = index+1;
-                            } else {
-                                return Err(unclosed_brace_err(t));
-                            }
-                            
+                            self.parse_subkey(&key, t)?;
                         },
                         TokenType::RightBrace => return Err(unexpected_token_err(t.clone())),
 
@@ -64,6 +48,22 @@ impl<'a> Builder<'a> {
 
         }
         Ok(self.result)
+    }
+
+    fn parse_subkey(&mut self, key: &str, start_brace: Token) -> Result<(), Error> {
+        if let Some(index) = self.find_matching_brace() {
+            match &Builder::from(&self.tokens[self.current..index].to_vec()).build() {
+                Ok(subkey) => {
+                    self.result.add_subkey(&key, subkey);
+                },
+                
+                Err(e) => return Err(e.clone()),
+            }
+            self.current = index+1;
+            Ok(())
+        } else {
+            return Err(unclosed_brace_err(start_brace));
+        }
     }
 
     fn find_matching_brace(&self) -> Option<usize> {
