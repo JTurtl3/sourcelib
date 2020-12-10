@@ -2,7 +2,7 @@
 A Rust library for using Source Engine data types and files.
 
 ## Status
-Minimally functional at best. The project has basically just started.
+You probably shouldn't use this crate yet. It's so feature incomplete that you're better off doing these things yourself.
 
 ## Features
 - Reading .bsp files
