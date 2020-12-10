@@ -1,7 +1,7 @@
 use super::{
     error::*,
     parser::*,
-    keyvalues::*,
+    KeyValues,
 };
 
 // Construct KeyValues from a vec of tokens
