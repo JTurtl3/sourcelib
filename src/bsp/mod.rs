@@ -2,9 +2,9 @@ mod lump;
 mod error;
 mod header;
 
-use lump::*;
-use error::*;
-use header::*;
+pub use lump::*;
+pub use error::*;
+pub use header::*;
 
 use std::{
     fs::File,
