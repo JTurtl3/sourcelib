@@ -19,14 +19,15 @@ pub struct Bsp {
 }
 
 impl Bsp {
-    pub fn from_file(path: &str) -> Result<Bsp, Error> {
+    pub fn from_file(path: &str) -> Result<Bsp, Box<dyn std::error::Error>> {
         let mut bytes: Vec<u8> = Vec::new();
-        let mut f = File::open(path).unwrap();
+        let mut f = File::open(path)?;
         
         if let Err(e) = f.read_to_end(&mut bytes) {
-            Err(Error::IoError(e))
+            Err(Box::new(Error::IoError(e)))
         } else {
-            Bsp::from_bytes(bytes)
+            let res = Bsp::from_bytes(bytes)?;
+            Ok(res)
         }
     }
 
