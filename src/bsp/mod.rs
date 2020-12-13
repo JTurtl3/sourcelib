@@ -24,7 +24,7 @@ impl Bsp {
         let mut f = File::open(path)?;
         
         if let Err(e) = f.read_to_end(&mut bytes) {
-            Err(Box::new(Error::IoError(e)))
+            Err(Box::new(e))
         } else {
             let res = Bsp::from_bytes(bytes)?;
             Ok(res)
