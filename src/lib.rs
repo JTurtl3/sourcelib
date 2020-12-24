@@ -1,5 +1,6 @@
 pub mod bsp;
 pub mod keyvalues;
+pub mod vtf;
 
 pub mod vector;
 

@@ -20,7 +20,7 @@ impl Header {
         let version     = get_bsp_version(bytes)?;
         let lumps       = get_lump_info(bytes)?;
         let iteration   = get_map_version(bytes)?;
-    
+
         Ok(Header {
             identifier, version, lumps, iteration
         })
