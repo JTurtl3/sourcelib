@@ -1,155 +1,117 @@
-use super::error::{Error, ErrorKind};
-
-use std::{
-    fs::File,
-    io::Read,
+use super::{
+    error::*,
+    token::*,
+    KeyValues,
 };
 
-pub fn parse(string: &str) -> Result<Vec<Token>, Error> {
-    Parser::from(string).parse()
+// Construct KeyValues from a vec of tokens
+pub fn parse_keyvalues(tokens: &Vec<Token>) -> Result<KeyValues, Error> {
+    Builder::from(tokens).build()
 }
 
-pub fn parse_file(path: &str) -> Result<Vec<Token>, Box<dyn std::error::Error>> {
-    let mut file = File::open(path)?;
-    let mut content = String::new();
-    file.read_to_string(&mut content)?;
-    let v = parse(content.as_str())?;
-    Ok(v)
-}
-
-#[derive(Debug, Clone)]
-pub struct Token {
-    pub kind: TokenType,
-    pub line: usize,
-    //todo: pub character: char, the token's char index on the line
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum TokenType {
-    LeftBrace, RightBrace,
-    Str(String),
-
-    EOF,
-}
-
-
-#[derive(Default)]
-struct Parser<'a> {
-    source: &'a str,
-    tokens: Vec<Token>,
-    start: usize,
+struct Builder<'a> {
+    tokens: &'a Vec<Token>,
+    result: KeyValues,
     current: usize,
-    line: usize,
 }
 
-impl<'a> Parser<'a> {
-    fn from(string: &'a str) -> Self {
-        Self { source: string, line: 1, ..Default::default() }
+impl<'a> Builder<'a> {
+    fn from(tokens: &'a Vec<Token>) -> Self {
+        Self { tokens, result: KeyValues::new(), current: 0 }
     }
 
-    // Not a reference, will take ownership and drop itself after being called
-    fn parse(mut self) -> Result<Vec<Token>, Error>{
+    fn build(mut self) -> Result<KeyValues, Error> {
         while !self.is_at_end() {
-            self.start = self.current;
-            self.scan_token()?;
+            let t = self.advance();
+            match &t.kind {
+                TokenKind::Str(s) => {
+                    let key = s.clone();
+
+                    let t = self.advance();
+                    match &t.kind {
+                        TokenKind::Str(value) => {
+                            self.result.add_value(&key, &value);
+                        },
+                        TokenKind::LeftBrace => {
+                            self.parse_subkey(&key, t)?;
+                        },
+                        TokenKind::RightBrace => return Err(unexpected_token_err(t.clone())),
+
+                        TokenKind::EOF => return Err(unexpected_eof(t)),
+                    }
+                },
+
+                TokenKind::EOF => {}
+
+                _ => return Err(unexpected_token_err(t.clone())),
+            }
+
         }
-        
-        self.tokens.push(Token { line: self.tokens[self.tokens.len()-1].line, kind: TokenType::EOF });
-
-        Ok(self.tokens)
+        Ok(self.result)
     }
 
-    fn scan_token(&mut self) -> Result<(), Error> {
-        let c = self.advance();
-        match c {
-            '{' => self.add_token(TokenType::LeftBrace),
-            '}' => self.add_token(TokenType::RightBrace),
-
-            '"' => self.eat_string()?,
-
-            _ if c == '\n' => self.line += 1,
-            _ if c.is_whitespace() => {},
-
-            _ => self.eat_identifier(),
-        }
-        Ok(())
-    }
-
-    fn add_token(&mut self, kind: TokenType) {
-        self.tokens.push(Token {
-            kind,
-            line: self.line
-        });
-    }
-
-    fn advance(&mut self) -> char {
-        self.current += 1;
-        self.source.chars().nth(self.current-1).unwrap() // no reason why this unwrap should fail
-    }
-
-    fn peek(&self) -> char {
-        if !self.is_at_end() {
-            self.source.chars().nth(self.current).unwrap()
-        } else {
-            '\0'
-        }
-    }
-
-    fn eat_string(&mut self) -> Result<(), Error> {
-        while self.peek() != '"' && !self.is_at_end() {
-            if self.peek() == '\n' { self.line += 1; }
-            self.advance();
-        }
-
-        if self.is_at_end() {
-            Err(self.error(ErrorKind::UnterminatedString))
-        } else {
-            self.advance(); // last "
-            let s = self.source[self.start+1..self.current-1].to_string();
-            // todo: parse_escapes
-            self.add_token(TokenType::Str(s));
+    fn parse_subkey(&mut self, key: &str, start_brace: Token) -> Result<(), Error> {
+        if let Some(index) = self.find_matching_brace() {
+            match &Builder::from(&self.tokens[self.current..index].to_vec()).build() {
+                Ok(subkey) => {
+                    self.result.add_subkey(&key, subkey);
+                },
+                
+                Err(e) => return Err(e.clone()),
+            }
+            self.current = index+1;
             Ok(())
+        } else {
+            return Err(unclosed_brace_err(start_brace));
         }
     }
 
-    fn eat_identifier(&mut self) {
-        while !self.peek().is_whitespace() && !self.is_at_end() {
-            self.advance();
+    fn find_matching_brace(&self) -> Option<usize> {
+        let mut depth = 0;
+        for (i, v) in self.tokens[self.current..].iter().enumerate() {
+            if v.kind == TokenKind::RightBrace {
+                if depth == 0 {
+                    return Some(i + self.current);
+                } else {
+                    depth -= 1;
+                }
+            } else if v.kind == TokenKind::LeftBrace {
+                depth += 1;
+            }
         }
-
-        let s = self.source[self.start..self.current].to_string();
-        self.add_token(TokenType::Str(s));
-    }
-
-    fn error(&self, kind: ErrorKind) -> Error {
-        Error {
-            line: self.line,
-            kind
-        }
+        None
     }
 
     fn is_at_end(&self) -> bool {
-        self.current >= self.source.len()
+        self.current >= self.tokens.len()
+    }
+
+    fn advance(&mut self) -> Token {
+        self.current += 1;
+        self.tokens[self.current - 1].clone()
     }
 }
 
-//todo
-// fn parse_escapes(s: &String) -> String {
-//     let mut index = 0;
-//     let mut result: String = String::new();
-//     while index < s.len() {
-//         let c = s.chars().nth(index).unwrap();
-//         if c == '\\' {
-//             //toodoo
-//         }
-//         index += 1;
-//     }
+fn unexpected_token_err(t: Token) -> Error {
+    Error {
+        kind: ErrorKind::UnexpectedToken(t.kind),
+        line: t.line,
+        column: t.column,
+    }
+}
 
-//     result
-// }
+fn unclosed_brace_err(t: Token) -> Error {
+    Error {
+        kind: ErrorKind::NoMatchingRightBrace,
+        line: t.line,
+        column: t.column,
+    }
+}
 
-// const escape_chars: [char; 3] = ['n', '\\', '"'];
-
-// fn is_valid_escape_char(c: char) -> bool {
-//     escape_chars.contains(&c)
-// }
+fn unexpected_eof(t: Token) -> Error {
+    Error {
+        kind: ErrorKind::UnexpectedEOF,
+        line: t.line,
+        column: t.column,
+    }
+}

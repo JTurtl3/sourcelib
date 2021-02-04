@@ -9,10 +9,13 @@
 mod error;
 pub use error::*;
 
-mod parser;
-pub use parser::*;
+mod token;
+pub use token::{Token, TokenKind};
 
-mod builder;
+mod lexer;
+pub use lexer::*;
+
+mod parser;
 
 use std::{
     collections::HashMap,
@@ -28,12 +31,12 @@ pub struct KeyValues {
 impl KeyValues {
     // Parse a string into KeyValues
     pub fn from_str(string: &str) -> Result<Self, Error> {
-        Self::from_tokens(&parse(string)?)
+        Self::from_tokens(&tokenize(string)?)
     }
 
     // Read KeyValues from a file (like .vmt files). Error could be syntax or IO
     pub fn from_file(path: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        let kv = Self::from_tokens(&parse_file(path)?)?;
+        let kv = Self::from_tokens(&tokenize_file(path)?)?;
         Ok(kv)
     }
     
@@ -77,7 +80,7 @@ impl KeyValues {
 
 
     fn from_tokens(tokens: &Vec<Token>) -> Result<Self, Error> {
-        builder::build_keyvalues(tokens)
+        parser::parse_keyvalues(tokens)
     }
 }
 
