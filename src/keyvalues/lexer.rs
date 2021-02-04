@@ -1,16 +1,16 @@
-use super::error::{Error, ErrorKind};
-use super::token::{Token, TokenKind};
+use super::error::*;
+use super::token::*;
 
 use std::{
     fs::File,
     io::Read,
 };
 
-pub fn tokenize(string: &str) -> Result<Vec<Token>, Error> {
+pub fn tokenize(string: &str) -> Result<Vec<Token>> {
     Lexer::from(string).tokenize()
 }
 
-pub fn tokenize_file(path: &str) -> Result<Vec<Token>, Box<dyn std::error::Error>> {
+pub fn tokenize_file(path: &str) -> Result<Vec<Token>> {
     let mut file = File::open(path)?;
     let mut content = String::new();
     file.read_to_string(&mut content)?;
@@ -36,7 +36,7 @@ impl<'a> Lexer<'a> {
     }
 
     // Not a reference, will take ownership and drop itself after being called
-    fn tokenize(mut self) -> Result<Vec<Token>, Error>{
+    fn tokenize(mut self) -> Result<Vec<Token>>{
         while !self.is_at_end() {
             self.start = self.current;
             self.scan_token()?;
@@ -47,7 +47,7 @@ impl<'a> Lexer<'a> {
         Ok(self.tokens)
     }
 
-    fn scan_token(&mut self) -> Result<(), Error> {
+    fn scan_token(&mut self) -> Result<()> {
         let c = self.advance();
         match c {
             '{' => self.add_token(TokenKind::LeftBrace),
@@ -85,7 +85,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn eat_string(&mut self) -> Result<(), Error> {
+    fn eat_string(&mut self) -> Result<()> {
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' { self.line += 1; }
             self.advance();

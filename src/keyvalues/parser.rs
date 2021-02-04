@@ -5,7 +5,7 @@ use super::{
 };
 
 // Construct KeyValues from a vec of tokens
-pub fn parse_keyvalues(tokens: &Vec<Token>) -> Result<KeyValues, Error> {
+pub fn parse_keyvalues(tokens: &Vec<Token>) -> Result<KeyValues> {
     Builder::from(tokens).build()
 }
 
@@ -20,7 +20,7 @@ impl<'a> Builder<'a> {
         Self { tokens, result: KeyValues::new(), current: 0 }
     }
 
-    fn build(mut self) -> Result<KeyValues, Error> {
+    fn build(mut self) -> Result<KeyValues> {
         while !self.is_at_end() {
             let t = self.advance();
             match &t.kind {
@@ -50,15 +50,12 @@ impl<'a> Builder<'a> {
         Ok(self.result)
     }
 
-    fn parse_subkey(&mut self, key: &str, start_brace: Token) -> Result<(), Error> {
+    fn parse_subkey(&mut self, key: &str, start_brace: Token) -> Result<()> {
         if let Some(index) = self.find_matching_brace() {
-            match &Builder::from(&self.tokens[self.current..index].to_vec()).build() {
-                Ok(subkey) => {
-                    self.result.add_subkey(&key, subkey);
-                },
-                
-                Err(e) => return Err(e.clone()),
-            }
+            self.result.add_subkey(
+                &key,
+                &Builder::from(&self.tokens[self.current..index].to_vec()).build()?
+            );
             self.current = index+1;
             Ok(())
         } else {

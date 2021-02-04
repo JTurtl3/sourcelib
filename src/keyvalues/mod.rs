@@ -30,12 +30,12 @@ pub struct KeyValues {
 
 impl KeyValues {
     // Parse a string into KeyValues
-    pub fn from_str(string: &str) -> Result<Self, Error> {
+    pub fn from_str(string: &str) -> Result<Self> {
         Self::from_tokens(&tokenize(string)?)
     }
 
     // Read KeyValues from a file (like .vmt files). Error could be syntax or IO
-    pub fn from_file(path: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_file(path: &str) -> Result<Self> {
         let kv = Self::from_tokens(&tokenize_file(path)?)?;
         Ok(kv)
     }
@@ -79,7 +79,7 @@ impl KeyValues {
     }
 
 
-    fn from_tokens(tokens: &Vec<Token>) -> Result<Self, Error> {
+    fn from_tokens(tokens: &Vec<Token>) -> Result<Self> {
         parser::parse_keyvalues(tokens)
     }
 }
