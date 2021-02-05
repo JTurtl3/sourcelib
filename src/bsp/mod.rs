@@ -6,73 +6,82 @@ pub use lump::*;
 pub use error::*;
 pub use header::*;
 
-use std::{
-    fs::File,
-    io::Read,
-    string::FromUtf8Error,
-};
+use std::fs::File;
+use std::io::Read;
+use std::io::Seek;
+use std::io::SeekFrom;
+
+use std::string::FromUtf8Error;
 
 #[derive(Debug)]
 pub struct Bsp {
-    pub header: Header,
-    pub lumps: Vec<Vec<u8>>,
+    pub version: u32,
+    pub lumps: [Lump; 64],
+    pub iteration: u32,
+    file: File,
 }
 
 impl Bsp {
-    pub fn from_file(path: &str) -> Result<Bsp, Box<dyn std::error::Error>> {
-        let mut bytes: Vec<u8> = Vec::new();
-        let mut f = File::open(path)?;
+    pub fn from_file(path: &str) -> Result<Self> {
+        let mut file = File::open(path)?;
+        let header = Header::read(&mut file)?;
         
-        if let Err(e) = f.read_to_end(&mut bytes) {
-            Err(Box::new(e))
+        Ok(Self {
+            version: header.version,
+            lumps: header.lumps,
+            iteration: header.iteration,
+            file
+        })
+    }
+
+    pub fn get_lump_data(&mut self, index: LumpIndex) -> Option<Vec<u8>> {
+        let lump = self.lumps[index as usize];
+        if lump.exists() {
+            let mut v = Vec::with_capacity(lump.length as usize);
+            for _ in 0..v.capacity() {
+                v.push(0);
+            }
+            if let Ok(_new_pos) = self.file.seek(SeekFrom::Start(lump.offset as u64)) {
+                if let Ok(_bytes_read) = self.file.read(&mut v) {
+                    Some(v)
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
         } else {
-            let res = Bsp::from_bytes(bytes)?;
-            Ok(res)
+            None
         }
     }
 
-    pub fn from_bytes(bytes: Vec<u8>) -> Result<Bsp, Error> {
-        let header = Header::from_bytes(&bytes)?;
-        let mut lumps: Vec<Vec<u8>> = Vec::new();
-
-        for i in 0..LUMPS {
-            lumps.push(header.lumps[i].get_data_from_bytes(&bytes)?);
-        }
-        
-        Ok(Bsp { header, lumps })
-    }
-    
-    // Convert the data in the Entity lump into a HashMap
-    // pub fn entity_lump(&self) -> Result<Vec<HashMap<String, String>>, FromUtf8Error> {
-    //     let mut map: Vec<HashMap<String, String>> = Vec::new();
-    //     let string = self.entity_lump_as_string()?;
-
-    //     Ok(map)
-    // }
-    
     // Convert the data in the Entity lump to a new String
     // Returns an empty string if the lump doesn't exist
     //  | VBSP guarantees that at least one entity, "worldspawn", exists
     //  | so this should really never happen (but it CAN happen!)
-    // Returns a FromUtf8Error if, well, there was a problem making a UTF-8 String
+    // Returns a FromUtf8Error if there was a problem making a UTF-8 String
     //  | 102% of the time, it's because the lump is LZMA compressed
     //  | TF2, and probably more, do this (TODO: Decompression)
     //  | Otherwise this lump should be valid ASCII, so... good luck if this happens
-    pub fn entity_lump_as_string(&self) -> Result<String, FromUtf8Error> {
-        String::from_utf8(self.lumps[LumpIndex::Entities as usize].clone())
+    pub fn entity_lump_as_string(&mut self) -> std::result::Result<String, FromUtf8Error> {
+        if let Some(data) = self.get_lump_data(LumpIndex::Entities) {
+            let mut s = String::from_utf8(data)?;
+            // Remove the trailing null
+            s.pop();
+            Ok(s)
+        } else {
+            Ok("".to_string())
+        }
+
     }
 }
 
-// fn parse_entity_lump_string(string: String) -> Result<Vec<HashMap<String, String>>, ()> {
-//     // todo lol
-// }
-
 impl std::fmt::Display for Bsp {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::result::Result<(), std::fmt::Error> {
         write!(f,
-"Version: {}, Map Iteration: {}",
-    self.header.version,
-    self.header.iteration,
+"BSP Version: {}, Map Iteration: {}",
+    self.version,
+    self.iteration,
         )
     }
 }

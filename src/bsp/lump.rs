@@ -1,42 +1,35 @@
-use super::error::Error;
+use super::error::*;
 
-#[derive(Default, Clone, Copy, Debug)]
+use std::io::Read;
+use std::convert::TryInto;
+
+#[derive(Debug, Default, Clone, Copy)]
 pub struct Lump {
-    // where in the file the Lump's data is stored (byte offset)
     pub offset: u32,
-
-    // how much data is there (in bytes)
     pub length: u32,
-
-    // The... version.
-    // Usually 0, no idea what the details are
     pub version: u32,
-
-    // Something with Lump compression
-    // I have no idea right now
-    // When uncompressed, it's just [0,0,0,0]
-    pub indent_code: [u8 ; 4],
+    pub indent_code: [u8; 4],
 }
 
 impl Lump {
-    pub fn exists(&self) -> bool {
-        self.length != 0
+    pub fn read<T: Read>(file: &mut T) -> Result<Self> {
+        // 1x 16 byte read is better than 4x 4 byte reads
+        let mut bytes = [0; 16];
+        file.read(&mut bytes)?;
+
+        // Nothing wrong with unwrapping hardcoded values
+        let offset = u32::from_le_bytes(bytes[0..4].try_into().unwrap());
+        let length = u32::from_le_bytes(bytes[4..8].try_into().unwrap());
+        let version = u32::from_le_bytes(bytes[8..12].try_into().unwrap());
+        let indent_code: [u8; 4] = bytes[12..16].try_into().unwrap();
+
+        Ok(Self { offset, length, version, indent_code })
     }
 
-    pub fn get_data_from_bytes(&self, bytes: &Vec<u8>) -> Result<Vec<u8>, Error> {
-        if self.exists() {
-            if let Some(val) = bytes.get(self.offset as usize..(self.offset+self.length) as usize) {
-                Ok(val.to_vec())
-            } else {
-                Err(Error::UnexpectedEof)
-            }
-        } else {
-            return Ok(Vec::new())
-        }
+    pub fn exists(&self) -> bool {
+        self.offset > 0 && self.length > 0
     }
 }
-
-pub const LUMPS: usize = 64;
 
 // see https://developer.valvesoftware.com/wiki/Source_BSP_File_Format, under Lump Types
 // Depending on a Lump's index in the Header's lump array,
