@@ -35,9 +35,8 @@ impl KeyValues {
     }
 
     // Read KeyValues from a file (like .vmt files). Error could be syntax or IO
-    pub fn from_file(path: &str) -> Result<Self> {
-        let kv = Self::from_tokens(&tokenize_file(path)?)?;
-        Ok(kv)
+    pub fn from_file(path: &str) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+        Ok(Self::from_tokens(&tokenize_file(path)?)?)
     }
     
     // Empty KeyValues struct

@@ -10,7 +10,7 @@ pub fn tokenize(string: &str) -> Result<Vec<Token>> {
     Lexer::from(string).tokenize()
 }
 
-pub fn tokenize_file(path: &str) -> Result<Vec<Token>> {
+pub fn tokenize_file(path: &str) -> std::result::Result<Vec<Token>, Box<dyn std::error::Error>> {
     let mut file = File::open(path)?;
     let mut content = String::new();
     file.read_to_string(&mut content)?;
