@@ -39,7 +39,7 @@ fn parse_lopsided_keyvalues() {
     let res = KeyValues::from_str("key value\nkeey vaalue\nkey?");
     assert_eq!(
         res,
-        Err(Error { kind: ErrorKind::UnexpectedEOF, line: 3 })
+        Err(Error { kind: ErrorKind::UnexpectedEOF, line: 3, column: 1 })
     );
 }
 
@@ -48,7 +48,7 @@ fn parse_keyvalues_unclosed_brace() {
     let res = KeyValues::from_str("key value\nsubkey\n{\nkey value");
     assert_eq!(
         res,
-        Err(Error { kind: ErrorKind::NoMatchingRightBrace, line: 3 })
+        Err(Error { kind: ErrorKind::NoMatchingRightBrace, line: 3, column: 2 })
     );
 }
 
@@ -58,8 +58,9 @@ fn parse_keyvalues_unexpected_brace() {
     assert_eq!(
         res,
         Err(Error {
-            kind: ErrorKind::UnexpectedToken(TokenType::RightBrace),
-            line: 2
+            kind: ErrorKind::UnexpectedToken(TokenKind::RightBrace),
+            line: 2,
+            column: 2,
         })
     );
 }
